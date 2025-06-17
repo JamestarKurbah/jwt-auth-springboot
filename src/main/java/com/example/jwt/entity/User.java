@@ -1,4 +1,4 @@
-package com.example.jwt.model;
+package com.example.jwt.entity;
 
 import java.util.HashSet;
 import java.util.Set;

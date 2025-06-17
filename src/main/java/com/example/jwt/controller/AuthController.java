@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.jwt.config.JwtUtil;
-import com.example.jwt.model.User;
+import com.example.jwt.entity.User;
 import com.example.jwt.repository.UserRepository;
 
 @RestController

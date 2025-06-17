@@ -9,7 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.example.jwt.model.User;
+import com.example.jwt.entity.User;
 import com.example.jwt.repository.UserRepository;
 
 @Service
