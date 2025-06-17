@@ -1,13 +1,16 @@
 package com.example.jwt.controller;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,12 +34,26 @@ public class AuthController {
     @Autowired private JwtUtil jwtUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(Set.of("ROLE_USER"));
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered");
+    public ResponseEntity<String> registerUser(@RequestBody User request) {
+    if (userRepository.existsByUsername(request.getUsername())) {
+        return ResponseEntity.badRequest().body("Username is already taken.");
     }
+
+    User user = new User();
+    user.setUsername(request.getUsername());
+    user.setEmail(request.getEmail());
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+    // Assign roles based on existing user count
+    if (userRepository.count() == 0) {
+        user.setRoles(Set.of("ROLE_ADMIN"));
+    } else {
+        user.setRoles(Set.of("ROLE_USER"));
+    }
+
+    userRepository.save(user);
+    return ResponseEntity.ok("User registered successfully.");
+}
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request) {
@@ -47,12 +64,16 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
     // This endpoint is protected via Spring Security configuration
-    @GetMapping("/data")
-    public Map<String, String> getUserData(@AuthenticationPrincipal UserDetails userDetails) {
-        return Map.of(
-            "message", "This is protected user data.",
-            "username", userDetails.getUsername()
-        );
+    @GetMapping("/info")
+    public Map<String, Object> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
+    List<String> roles = userDetails.getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.toList());
+
+    return Map.of(
+        "username", userDetails.getUsername(),
+        "roles", roles
+    );
     }
 }
 
