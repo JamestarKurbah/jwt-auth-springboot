@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.jwt.config.JwtUtil;
-import com.example.jwt.model.User;
+import com.example.jwt.model.UserEntity;
 import com.example.jwt.repository.UserRepository;
 
 @RestController
@@ -34,12 +35,12 @@ public class AuthController {
     @Autowired private JwtUtil jwtUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody User request) {
+    public ResponseEntity<String> registerUser(@RequestBody UserEntity request) {
     if (userRepository.existsByUsername(request.getUsername())) {
         return ResponseEntity.badRequest().body("Username is already taken.");
     }
 
-    User user = new User();
+    UserEntity user = new UserEntity();
     user.setUsername(request.getUsername());
     user.setEmail(request.getEmail());
     user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -74,6 +75,17 @@ public class AuthController {
         "username", userDetails.getUsername(),
         "roles", roles
     );
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/api/admin")
+    public String adminEndpoint() {
+        return "Accessible only by ADMIN";
+    }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/api/user")
+    public String userEndpoint() {
+        return "Accessible by USER or ADMIN";
     }
 }
 
